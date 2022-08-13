@@ -37,7 +37,7 @@ app.get('/', (req, res) => {
 app.post('/upload', upload.single('videoUpload'), async (req, res) => {
   if (req.file.filename !== null && req.file.filename !== undefined) {
     res.status(200).send({
-      data: `${process.env.API_BEGINNING_POINT}:${process.env.PORT}/uploadedAssets/temp/${req.file.filename}`
+      data: `/uploadedAssets/temp/${req.file.filename}`
     });
   }
 });
