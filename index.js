@@ -1,59 +1,69 @@
 const express = require('express');
 const multer = require('multer');
 const cors = require('cors');
-const FormData = require('form-data');
 const fs = require('fs');
-const { default: fetch } = require('node-fetch');
-const { response } = require('express');
-require('dotenv').config()
+const fsx = require('fs-extra');
 
+// CONFIG DOTENV 
+require('dotenv').config()
 
 const app = express()
 
-// Add public path 
+// ADD PUBLIC PATH
 app.use('/uploadedAssets/temp', express.static('uploadedAssets/temp'))
 
-// middleware 
+// MIDDLEWARE
 app.use(cors())
 
-// multer setup 
+// MULTER SETUP
 const storage = multer.diskStorage({
   destination: function (req, file, callback) {
-    callback(null, 'uploadedAssets/temp')
+    const path = `./uploadedAssets/temp`;
+    if (!fsx.existsSync(path)) {
+      fsx.ensureDirSync(path)
+        callback(null, path)
+    }else{
+      callback(null, path)
+    }
   },
   filename: function (req, file, callback) {
-    callback(null, `${Date.now()}-${file.originalname.split(" ").join()}`)
+    callback(null, `${Date.now()}-${file.originalname.split(" ").join("_")}`)
   }
 })
-
 const upload = multer({ storage: storage })
 
-
-// routes 
+// ROUTES
 app.get('/', (req, res) => {
-  res.send(`running on ${process.env.API_BEGINNING_POINT}:${process.env.PORT}`)
+  res.status(200).send(`running`)
 });
 
+// UPLOAD VIDEO 
 app.post('/upload', upload.single('videoUpload'), async (req, res) => {
-  if (req.file.filename !== null && req.file.filename !== undefined) {
-    res.status(200).send({
-      data: `/uploadedAssets/temp/${req.file.filename}`
-    });
-  }
+  res.status(200).send({
+    data:`${process.env.API_BEGINNING_POINT}uploadedAssets/temp/${req.file.filename}`,
+    message:"Video uploaded successfully."
+  });
 });
 
-// app.delete('/delete', async async (req, res) => {
-//   setTimeout(() => {
-//     if (req.query.fileName !== null && req.query.fileName) {
-//       const data = await fs.unlink(req.query.fileName);
-//       console.log(data);
-//     }
-//   }, 200)
 
-// });
+// DELETE VIDEO BY FILE_NAME 
+app.delete('/delete/:file_name', async (req, res) => {
+  const dir = `${__dirname}/uploadedAssets/temp/${req.params.file_name}`
+  fs.unlink(dir, (err) => {
+    if (!err) {
+      res.status(200).send({
+        message:"Video deleted successfully."
+      })
+    }else{
+      console.error(err)
+      res.status(400).send({
+        message:"Failed to delete video!"
+      })
+    }
+  })
+});
 
-
-// listening 
-app.listen(process.env.PORT, () => {
-  console.log(`app is listening on ${process.env.API_BEGINNING_POINT}:${process.env.PORT}`);
+// LISTENING
+app.listen(process.env.PORT || 8080, () => {
+  console.log(`app is listening on ${process.env.API_BEGINNING_POINT}`);
 })
