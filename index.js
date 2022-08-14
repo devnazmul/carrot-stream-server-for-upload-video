@@ -31,7 +31,7 @@ const upload = multer({ storage: storage })
 
 // routes 
 app.get('/', (req, res) => {
-  res.send(`running`)
+  res.send(`running on ${process.env.API_BEGINNING_POINT}:${process.env.PORT}`)
 });
 
 app.post('/upload', upload.single('videoUpload'), async (req, res) => {
